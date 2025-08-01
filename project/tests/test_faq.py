@@ -1,6 +1,5 @@
 import pytest
 import allure
-import time
 from project.pages.main_page import MainPage
 from project.pages.faq_page import FAQPage
 
@@ -57,7 +56,8 @@ def test_faq_questions(driver, index, question, answer):
 
     with allure.step("Прокрутить до раздела FAQ"):
         faq_page.scroll_to_faq()
-        time.sleep(1)  # Даём время для завершения анимации
+        # Вместо sleep - ждём появления одного из вопросов (явное ожидание)
+        faq_page.find_visible_element(faq_page.locators.QUESTION(1))
 
     with allure.step(f'Проверить вопрос: "{question}"'):
         question_text = faq_page.get_question_text(index)
@@ -67,7 +67,7 @@ def test_faq_questions(driver, index, question, answer):
 
     with allure.step("Кликнуть на вопрос и проверить ответ"):
         faq_page.click_question(index)
-        time.sleep(0.5)  # Даём время для раскрытия ответа
+        # Ждём появления ответа после клика (явное ожидание в методе get_answer_text)
         answer_text = faq_page.get_answer_text(index)
         assert (
             answer in answer_text

@@ -1,16 +1,7 @@
 import pytest
 import allure
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from project.pages.main_page import MainPage
 from project.pages.order_page import OrderPage
-from project.locators.order_page_locators import OrderPageLocators
-
-
-ORDER_BUTTONS = [
-    OrderPageLocators.ORDER_BUTTON_1,
-    OrderPageLocators.ORDER_BUTTON_2,
-]
 
 ORDER_DATA = [
     {
@@ -42,15 +33,7 @@ def test_positive_order_scenario(driver, order_data):
         main_page.wait_for_load()
 
     with allure.step("Нажать кнопку 'Заказать' на главной странице"):
-        button_locator = ORDER_BUTTONS[0] 
-        button = WebDriverWait(driver, 15).until(
-            EC.element_to_be_clickable(button_locator)
-        )
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-        try:
-            button.click()
-        except Exception:
-            driver.execute_script("arguments[0].click();", button)
+        main_page.click_order_button(index=0)
 
     with allure.step("Заполнить данные для заказа"):
         order_page.fill_name(order_data["name"])
@@ -81,31 +64,26 @@ def test_positive_order_scenario(driver, order_data):
         order_page.click_view_status_on_modal()
 
     with allure.step("Проверить переход на страницу статуса заказа"):
-        WebDriverWait(driver, 15).until(
-            lambda d: "status" in d.current_url or "track" in d.current_url
-        )
+        order_page.wait_for_order_status_page()
         assert (
-            "status" in driver.current_url or "track" in driver.current_url
+            "status" in order_page.driver.current_url
+            or "track" in order_page.driver.current_url
         ), "Переход на страницу статуса не произошёл"
 
     with allure.step(
         "Проверить переход на главную страницу Самоката по клику на логотип"
     ):
         order_page.click_scooter_logo()
-        WebDriverWait(driver, 15).until(
-            lambda d: d.current_url == "https://qa-scooter.praktikum-services.ru/"
-        )
+        order_page.wait_for_main_page()
         assert (
-            driver.current_url == "https://qa-scooter.praktikum-services.ru/"
+            order_page.driver.current_url == "https://qa-scooter.praktikum-services.ru/"
         ), "Не произошёл переход на главную страницу Самоката"
 
     with allure.step("Проверить переход на страницу Дзена по логотипу Яндекса"):
         order_page.click_yandex_logo()
         order_page.switch_to_new_window()
-        WebDriverWait(driver, 15).until(
-            lambda d: "dzen.ru" in d.current_url or "yandex.ru" in d.current_url
-        )
-        current_url = driver.current_url
+        order_page.wait_for_dzen_page()
+        current_url = order_page.driver.current_url
         assert (
             "dzen.ru" in current_url or "yandex.ru" in current_url
         ), f"Ожидался редирект на Дзен, открыт: {current_url}"
